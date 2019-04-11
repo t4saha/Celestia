@@ -17,8 +17,8 @@
 #include <celengine/octree.h>
 
 
-typedef DynamicOctree  <Star, float> DynamicStarOctree;
-typedef StaticOctree   <Star, float> StarOctree;
-typedef OctreeProcessor<Star, float> StarHandler;
+typedef DynamicOctree  <Star, double> DynamicStarOctree;
+typedef StaticOctree   <Star, double> StarOctree;
+typedef OctreeProcessor<Star, double> StarHandler;
 
 #endif  // _CELENGINE_STAROCTREE_H_

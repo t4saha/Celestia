@@ -78,15 +78,19 @@ class UniversalCoord
       * units of light years.) The difference is calculated at high precision and
       * the reduced to single precision.
       */
-    Eigen::Vector3f offsetFromLy(const Eigen::Vector3f& v) const
+    Eigen::Vector3d offsetFromLy(const Eigen::Vector3d& v) const
     {
-        Eigen::Vector3f vUly = v * 1.0e6f;
-        Eigen::Vector3f offsetUly((float) (x - (BigFix) vUly.x()),
-                                  (float) (y - (BigFix) vUly.y()),
-                                  (float) (z - (BigFix) vUly.z()));
-        return offsetUly * 1.0e-6f;
+        Eigen::Vector3d vUly = v * 1.0e6f;
+        Eigen::Vector3d offsetUly((double) (x - (BigFix) vUly.x()),
+                                  (double) (y - (BigFix) vUly.y()),
+                                  (double) (z - (BigFix) vUly.z()));
+        return offsetUly * 1.0e-6;
     }
 
+    Eigen::Vector3f offsetFromLy(const Eigen::Vector3f& v) const
+    {
+        return (offsetFromLy((const Eigen::Vector3d&)v.cast<double>())).cast<float>();
+    }
     /** Get the offset in light years of this coordinate from a point (also with
       * units of light years.) The difference is calculated at high precision and
       * the reduced to single precision.

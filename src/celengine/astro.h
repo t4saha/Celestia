@@ -120,10 +120,10 @@ namespace astro
     double TAItoJDUTC(double tai);
 
     // Magnitude conversions
-    float lumToAbsMag(float lum);
-    float lumToAppMag(float lum, float lyrs);
-    float absMagToLum(float mag);
-    float appMagToLum(float mag, float lyrs);
+    double lumToAbsMag(double lum);
+    double lumToAppMag(double lum, double lyrs);
+    double absMagToLum(double mag);
+    double appMagToLum(double mag, double lyrs);
 
     template<class T> constexpr T absToAppMag(T absMag, T lyrs)
     {

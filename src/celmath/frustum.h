@@ -21,18 +21,18 @@ class Frustum
  public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    typedef Eigen::Hyperplane<float, 3> PlaneType;
+    typedef Eigen::Hyperplane<double, 3> PlaneType;
 
-    Frustum(float fov, float aspectRatio, float nearDist);
-    Frustum(float fov, float aspectRatio, float nearDist, float farDist);
+    Frustum(double fov, float aspectRatio, double nearDist);
+    Frustum(double fov, float aspectRatio, double nearDist, double farDist);
 
-    inline Eigen::Hyperplane<float, 3> plane(unsigned int which) const
+    inline Eigen::Hyperplane<double, 3> plane(unsigned int which) const
     {
         return planes[which];
     }
 
-    void transform(const Eigen::Matrix3f& m);
-    void transform(const Eigen::Matrix4f& m);
+    void transform(const Eigen::Matrix3d& m);
+    void transform(const Eigen::Matrix4d& m);
 
     enum {
         Bottom    = 0,
@@ -55,9 +55,9 @@ class Frustum
 //    Aspect testCapsule(const Capsulef&) const;
 
  private:
-    void init(float, float, float, float);
+    void init(double, float, double, double);
 
-    Eigen::Hyperplane<float, 3> planes[6];
+    Eigen::Hyperplane<double, 3> planes[6];
     bool infinite;
 };
 

@@ -3018,7 +3018,7 @@ static void displayStarInfo(Overlay& overlay,
         fmt::fprintf(overlay, _("Abs (app) mag: %.2f (%.2f)\n"),
                                 star.getAbsoluteMagnitude(),
                                 astro::absToAppMag(star.getAbsoluteMagnitude(),
-                                                   float(distance)));
+                                                   distance));
 
         if (star.getLuminosity() > 1.0e-10f)
             fmt::fprintf(overlay, _("Luminosity: %sx Sun\n"), SigDigitNum(star.getLuminosity(), 3));

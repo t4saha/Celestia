@@ -253,12 +253,12 @@ public:
      *  star in an orbit, the position should be set to the 'root' barycenter
      *  of the system.
      */
-    Eigen::Vector3f getPosition() const
+    Eigen::Vector3d getPosition() const
     {
         return position;
     }
 
-    float getAbsoluteMagnitude() const
+    double getAbsoluteMagnitude() const
     {
         return absMag;
     }
@@ -273,8 +273,8 @@ public:
     Eigen::Vector3d getVelocity(double t) const;
 
     void setCatalogNumber(uint32_t);
-    void setPosition(float, float, float);
-    void setPosition(const Eigen::Vector3f& positionLy);
+    void setPosition(double, double, double);
+    void setPosition(const Eigen::Vector3d& positionLy);
     void setAbsoluteMagnitude(float);
     void setLuminosity(float);
 
@@ -312,8 +312,8 @@ public:
 
 private:
     uint32_t catalogNumber{ InvalidCatalogNumber };
-    Eigen::Vector3f position{ Eigen::Vector3f::Zero() };
-    float absMag{ 4.83f };
+    Eigen::Vector3d position{ Eigen::Vector3d::Zero() };
+    double absMag{ 4.83f };
     StarDetails* details{ nullptr };
 };
 

@@ -1106,12 +1106,12 @@ void Star::setCatalogNumber(uint32_t n)
     catalogNumber = n;
 }
 
-void Star::setPosition(float x, float y, float z)
+void Star::setPosition(double x, double y, double z)
 {
-    position = Vector3f(x, y, z);
+    position = Vector3d(x, y, z);
 }
 
-void Star::setPosition(const Vector3f& positionLy)
+void Star::setPosition(const Vector3d& positionLy)
 {
     position = positionLy;
 }
@@ -1124,7 +1124,7 @@ void Star::setAbsoluteMagnitude(float mag)
 
 float Star::getApparentMagnitude(float ly) const
 {
-    return astro::absToAppMag(absMag, ly);
+    return astro::absToAppMag(absMag, (double)ly);
 }
 
 

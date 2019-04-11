@@ -14,37 +14,37 @@
 using namespace Eigen;
 
 
-Frustum::Frustum(float fov, float aspectRatio, float n) :
+Frustum::Frustum(double fov, float aspectRatio, double n) :
     infinite(true)
 {
     init(fov, aspectRatio, n, n);
 }
 
 
-Frustum::Frustum(float fov, float aspectRatio, float n, float f) :
+Frustum::Frustum(double fov, float aspectRatio, double n, double f) :
     infinite(false)
 {
     init(fov, aspectRatio, n, f);
 }
 
 
-void Frustum::init(float fov, float aspectRatio, float n, float f)
+void Frustum::init(double fov, float aspectRatio, double n, double f)
 {
-    float h = std::tan(fov / 2.0f);
-    float w = h * aspectRatio;
+    double h = std::tan(fov / 2.0f);
+    double w = h * aspectRatio;
 
-    Vector3f normals[4];
-    normals[Bottom] = Vector3f( 0.0f,  1.0f, -h);
-    normals[Top]    = Vector3f( 0.0f, -1.0f, -h);
-    normals[Left]   = Vector3f( 1.0f,  0.0f, -w);
-    normals[Right]  = Vector3f(-1.0f,  0.0f, -w);
+    Vector3d normals[4];
+    normals[Bottom] = Vector3d( 0.0,  1.0, -h);
+    normals[Top]    = Vector3d( 0.0, -1.0, -h);
+    normals[Left]   = Vector3d( 1.0,  0.0, -w);
+    normals[Right]  = Vector3d(-1.0,  0.0, -w);
     for (unsigned int i = 0; i < 4; i++)
     {
-        planes[i] = Hyperplane<float, 3>(normals[i].normalized(), 0.0f);
+        planes[i] = Hyperplane<double, 3>(normals[i].normalized(), 0.0);
     }
 
-    planes[Near] = Hyperplane<float, 3>(Vector3f(0.0f, 0.0f, -1.0f), -n);
-    planes[Far]  = Hyperplane<float, 3>(Vector3f(0.0f, 0.0f,  1.0f),  f);
+    planes[Near] = Hyperplane<double, 3>(Vector3d(0.0, 0.0, -1.0), -n);
+    planes[Far]  = Hyperplane<double, 3>(Vector3d(0.0, 0.0,  1.0),  f);
 }
 
 
@@ -55,7 +55,7 @@ Frustum::test(const Eigen::Vector3f& point) const
 
     for (unsigned int i = 0; i < nPlanes; i++)
     {
-        if (planes[i].signedDistance(point) < 0.0f)
+        if (planes[i].signedDistance(point.cast<double>()) < 0.0)
             return Outside;
     }
 
@@ -71,7 +71,7 @@ Frustum::testSphere(const Eigen::Vector3f& center, float radius) const
 
     for (unsigned int i = 0; i < nPlanes; i++)
     {
-        float distanceToPlane = planes[i].signedDistance(center);
+        double distanceToPlane = planes[i].signedDistance(center.cast<double>());
         if (distanceToPlane < -radius)
             return Outside;
         if (distanceToPlane <= radius)
@@ -153,7 +153,7 @@ Frustum::Aspect Frustum::testCapsule(const Capsulef& capsule) const
 */
 
 void
-Frustum::transform(const Matrix3f& m)
+Frustum::transform(const Matrix3d& m)
 {
     unsigned int nPlanes = infinite ? 5 : 6;
 
@@ -165,10 +165,10 @@ Frustum::transform(const Matrix3f& m)
 
 
 void
-Frustum::transform(const Matrix4f& m)
+Frustum::transform(const Matrix4d& m)
 {
     unsigned int nPlanes = infinite ? 5 : 6;
-    Matrix4f invTranspose = m.inverse().transpose();
+    Matrix4d invTranspose = m.inverse().transpose();
 
     for (unsigned int i = 0; i < nPlanes; i++)
     {

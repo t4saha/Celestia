@@ -223,7 +223,7 @@ class ClosestStarFinder : public StarHandler
 public:
     ClosestStarFinder(float _maxDistance, const Universe* _universe);
     ~ClosestStarFinder() = default;
-    void process(const Star& star, float distance, float appMag);
+    void process(const Star& star, double distance, float appMag);
 
 public:
     float maxDistance;
@@ -243,7 +243,7 @@ ClosestStarFinder::ClosestStarFinder(float _maxDistance,
 {
 }
 
-void ClosestStarFinder::process(const Star& star, float distance, float /*unused*/)
+void ClosestStarFinder::process(const Star& star, double distance, float /*unused*/)
 {
     if (distance < closestDistance)
     {
@@ -261,7 +261,7 @@ class NearStarFinder : public StarHandler
 public:
     NearStarFinder(float _maxDistance, vector<const Star*>& nearStars);
     ~NearStarFinder() = default;
-    void process(const Star& star, float distance, float appMag);
+    void process(const Star& star, double distance, float appMag);
 
 private:
     float maxDistance;
@@ -275,7 +275,7 @@ NearStarFinder::NearStarFinder(float _maxDistance,
 {
 }
 
-void NearStarFinder::process(const Star& star, float distance, float /*unused*/)
+void NearStarFinder::process(const Star& star, double distance, float /*unused*/)
 {
     if (distance < maxDistance)
         nearStars.push_back(&star);
@@ -515,7 +515,7 @@ public:
     StarPicker(const Vector3f&, const Vector3f&, double, float);
     ~StarPicker() = default;
 
-    void process(const Star& /*star*/, float /*unused*/, float /*unused*/);
+    void process(const Star& /*star*/, double /*unused*/, float /*unused*/);
 
 public:
     const Star* pickedStar;
@@ -537,10 +537,10 @@ StarPicker::StarPicker(const Vector3f& _pickOrigin,
 {
 }
 
-void StarPicker::process(const Star& star, float /*unused*/, float /*unused*/)
+void StarPicker::process(const Star& star, double /*unused*/, float /*unused*/)
 {
-    Vector3f relativeStarPos = star.getPosition() - pickOrigin;
-    Vector3f starDir = relativeStarPos.normalized();
+    Vector3d relativeStarPos = star.getPosition() - pickOrigin.cast<double>();
+    Vector3d starDir = relativeStarPos.normalized();
 
     double sinAngle2 = 0.0;
 
@@ -555,15 +555,15 @@ void StarPicker::process(const Star& star, float /*unused*/, float /*unused*/)
         // intersection with a larger sphere to make sure we don't miss a star
         // right on the edge of the sphere.
         if (testIntersection(Ray3f(Vector3f::Zero(), pickRay),
-                             Spheref(relativeStarPos, orbitalRadius * 2.0f),
+                             Spheref(relativeStarPos.cast<float>(), orbitalRadius * 2.0f),
                              distance))
         {
             Vector3d starPos = star.getPosition(when).toLy();
-            starDir = (starPos - pickOrigin.cast<double>()).cast<float>().normalized();
+            starDir = (starPos - pickOrigin.cast<double>()).normalized();
         }
     }
 
-    Vector3f starMiss = starDir - pickRay;
+    Vector3d starMiss = starDir - pickRay.cast<double>();
     Vector3d sMd = starMiss.cast<double>();
     sinAngle2 = sMd.norm() / 2.0;
 
@@ -586,7 +586,7 @@ public:
                     float _maxDistance,
                     float angle);
     ~CloseStarPicker() = default;
-    void process(const Star& star, float lowPrecDistance, float appMag);
+    void process(const Star& star, double lowPrecDistance, float appMag);
 
 public:
     UniversalCoord pickOrigin;
@@ -615,7 +615,7 @@ CloseStarPicker::CloseStarPicker(const UniversalCoord& pos,
 }
 
 void CloseStarPicker::process(const Star& star,
-                              float lowPrecDistance,
+                              double lowPrecDistance,
                               float /*unused*/)
 {
     if (lowPrecDistance > maxDistance)
@@ -667,7 +667,7 @@ Selection Universe::pickStar(const UniversalCoord& origin,
                              float faintestMag,
                              float tolerance)
 {
-    Vector3f o = origin.toLy().cast<float>();
+    Vector3d o = origin.toLy().cast<double>();
 
     // Use a high precision pick test for any stars that are close to the
     // observer.  If this test fails, use a low precision pick test for stars
@@ -676,7 +676,7 @@ Selection Universe::pickStar(const UniversalCoord& origin,
     // precision test isn't nearly fast enough to use on our database of
     // over 100k stars.
     CloseStarPicker closePicker(origin, direction, when, 1.0f, tolerance);
-    starCatalog->findCloseStars(closePicker, o, 1.0f);
+    starCatalog->findCloseStars(closePicker, o, 1.0);
     if (closePicker.closestStar != nullptr)
         return Selection(const_cast<Star*>(closePicker.closestStar));
 
@@ -686,7 +686,7 @@ Selection Universe::pickStar(const UniversalCoord& origin,
     Quaternionf rotation;
     rotation.setFromTwoVectors(-Vector3f::UnitZ(), direction);
 
-    StarPicker picker(o, direction, when, tolerance);
+    StarPicker picker(o.cast<float>(), direction, when, tolerance);
     starCatalog->findVisibleStars(picker,
                                   o,
                                   rotation.conjugate(),
@@ -1199,10 +1199,10 @@ vector<string> Universe::getCompletionPath(const string& s,
 // with in one light year.
 SolarSystem* Universe::getNearestSolarSystem(const UniversalCoord& position) const
 {
-    Vector3f pos = position.toLy().cast<float>();
+    Vector3d pos = position.toLy().cast<double>();
     ClosestStarFinder closestFinder(1.0f, this);
     closestFinder.withPlanets = true;
-    starCatalog->findCloseStars(closestFinder, pos, 1.0f);
+    starCatalog->findCloseStars(closestFinder, pos, 1.0);
     return getSolarSystem(closestFinder.closestStar);
 }
 
@@ -1212,7 +1212,7 @@ Universe::getNearStars(const UniversalCoord& position,
                        float maxDistance,
                        vector<const Star*>& nearStars) const
 {
-    Vector3f pos = position.toLy().cast<float>();
+    Vector3d pos = position.toLy().cast<double>();
     NearStarFinder finder(maxDistance, nearStars);
     starCatalog->findCloseStars(finder, pos, maxDistance);
 }

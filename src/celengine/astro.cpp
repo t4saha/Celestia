@@ -165,24 +165,24 @@ static const UnitDefinition angleUnits[] =
 };
 
 
-float astro::lumToAbsMag(float lum)
+double astro::lumToAbsMag(double lum)
 {
-    return (float) (SOLAR_ABSMAG - log(lum) * LN_MAG);
+    return (double) (SOLAR_ABSMAG - log(lum) * LN_MAG);
 }
 
 // Return the apparent magnitude of a star with lum times solar
 // luminosity viewed at lyrs light years
-float astro::lumToAppMag(float lum, float lyrs)
+double astro::lumToAppMag(double lum, double lyrs)
 {
     return absToAppMag(lumToAbsMag(lum), lyrs);
 }
 
-float astro::absMagToLum(float mag)
+double astro::absMagToLum(double mag)
 {
-    return (float) exp((SOLAR_ABSMAG - mag) / LN_MAG);
+    return (double) exp((SOLAR_ABSMAG - mag) / LN_MAG);
 }
 
-float astro::appMagToLum(float mag, float lyrs)
+double astro::appMagToLum(double mag, double lyrs)
 {
     return absMagToLum(appToAbsMag(mag, lyrs));
 }

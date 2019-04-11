@@ -2505,11 +2505,11 @@ void Renderer::draw(const Observer& observer,
     Frustum xfrustum(degToRad(fov),
                      viewAspectRatio,
                      MinNearPlaneDistance);
-    xfrustum.transform(observer.getOrientationf().conjugate().toRotationMatrix());
+    xfrustum.transform(observer.getOrientationf().cast<double>().conjugate().toRotationMatrix());
 
     // Set up the camera for star rendering; the units of this phase
     // are light years.
-    Vector3f observerPosLY = observer.getPosition().offsetFromLy(Vector3f::Zero());
+    Vector3f observerPosLY = observer.getPosition().offsetFromLy((const Vector3f&)Vector3f::Zero());
     glPushMatrix();
     glRotate(m_cameraOrientation);
 
@@ -2744,15 +2744,15 @@ void Renderer::draw(const Observer& observer,
             if (atmosphere->height <= 0.0f)
                 continue;
 
-            float radius = render_item.body->getRadius();
-            Vector3f semiAxes = render_item.body->getSemiAxes() / radius;
+            double radius = render_item.body->getRadius();
+            Vector3d semiAxes = render_item.body->getSemiAxes().cast<double>() / radius;
 
-            Vector3f recipSemiAxes = semiAxes.cwiseInverse();
-            Vector3f eyeVec = render_item.position / radius;
+            Vector3d recipSemiAxes = semiAxes.cwiseInverse();
+            Vector3d eyeVec = render_item.position / radius;
 
             // Compute the orientation of the planet before axial rotation
             Quaterniond qd = render_item.body->getEclipticToEquatorial(now);
-            Quaternionf q = qd.cast<float>();
+            Quaterniond q = qd;
             eyeVec = q * eyeVec;
 
             // ellipDist is not the true distance from the surface unless
@@ -2767,8 +2767,8 @@ void Renderer::draw(const Observer& observer,
             if (density > 1.0f)
                 density = 1.0f;
 
-            Vector3f sunDir = render_item.sun.normalized();
-            Vector3f normal = -render_item.position.normalized();
+            Vector3d sunDir = render_item.sun.normalized();
+            Vector3d normal = -render_item.position.normalized();
 #ifdef USE_HDR
             // Ignore magnitude of planet underneath when lighting atmosphere
             // Could be changed to simulate light pollution, etc
@@ -2980,7 +2980,7 @@ void Renderer::draw(const Observer& observer,
                 continue;
             }
 #endif
-            Vector3f center = viewMat.transpose() * render_item.position;
+            Vector3d center = viewMat.transpose().cast<double>() * render_item.position;
 
             bool convex = true;
             float radius = 1.0f;
@@ -3036,7 +3036,7 @@ void Renderer::draw(const Observer& observer,
 #endif // USE_HDR
 
             // Test the object's bounding sphere against the view frustum
-            if (frustum.testSphere(center, cullRadius) != Frustum::Outside)
+            if (frustum.testSphere(center, (double)cullRadius) != Frustum::Outside)
             {
                 float nearZ = center.norm() - radius;
 #ifdef USE_HDR
@@ -3244,7 +3244,7 @@ void Renderer::draw(const Observer& observer,
         for (i = 0; i < (int) orbitPathList.size(); i++)
         {
             const OrbitPathListEntry& o = orbitPathList[i];
-            float minNearDistance = min(-MinNearPlaneDistance, o.centerZ + o.radius);
+            double minNearDistance = min(-(double)MinNearPlaneDistance, o.centerZ + o.radius);
             if (minNearDistance > zNearest)
                 zNearest = minNearDistance;
         }
@@ -3277,7 +3277,7 @@ void Renderer::draw(const Observer& observer,
         {
             // TODO: closest object may not be at entry 0, since objects are
             // sorted by far distance.
-            float closest = zNearest;
+            double closest = zNearest;
             if (nEntries > 0)
             {
                 closest = max(closest, renderList[0].nearZ);
@@ -3538,7 +3538,7 @@ void Renderer::draw(const Observer& observer,
 // jarring, however . . . so we'll blend in the particle view of the
 // object to smooth things out, making it dimmer as the disc size exceeds the
 // max disc size.
-void Renderer::renderObjectAsPoint(const Vector3f& position,
+void Renderer::renderObjectAsPoint(const Vector3d& position,
                                    float radius,
                                    float appMag,
                                    float _faintestMag,
@@ -3618,33 +3618,33 @@ void Renderer::renderObjectAsPoint(const Vector3f& position,
             glareAlpha *= fade;
         }
 
-        Matrix3f m = cameraOrientation.conjugate().toRotationMatrix();
-        Vector3f center = position;
+        Matrix3d m = cameraOrientation.cast<double>().conjugate().toRotationMatrix();
+        Vector3d center = position;
 
         // Offset the glare sprite so that it lies in front of the object
-        Vector3f direction = center.normalized();
+        Vector3d direction = center.normalized();
 
         // Position the sprite on the the line between the viewer and the
         // object, and on a plane normal to the view direction.
-        center = center + direction * (radius / (m * Vector3f::UnitZ()).dot(direction));
+        center = center + direction * (radius / (m * Vector3d::UnitZ()).dot(direction));
 
         glEnable(GL_DEPTH_TEST);
 #if !defined(NO_MAX_POINT_SIZE)
         // TODO: OpenGL appears to limit the max point size unless we
         // actually set up a shader that writes the pointsize values. To get
         // around this, we'll use billboards.
-        Vector3f v0 = m * Vector3f(-1, -1, 0);
-        Vector3f v1 = m * Vector3f( 1, -1, 0);
-        Vector3f v2 = m * Vector3f( 1,  1, 0);
-        Vector3f v3 = m * Vector3f(-1,  1, 0);
-        float distanceAdjust = pixelSize * center.norm() * 0.5f;
+        Vector3d v0 = m * Vector3d(-1, -1, 0);
+        Vector3d v1 = m * Vector3d( 1, -1, 0);
+        Vector3d v2 = m * Vector3d( 1,  1, 0);
+        Vector3d v3 = m * Vector3d(-1,  1, 0);
+        double distanceAdjust = pixelSize * center.norm() * 0.5f;
 
         if (starStyle == PointStars)
         {
             glDisable(GL_TEXTURE_2D);
             glBegin(GL_POINTS);
             glColor(color, alpha);
-            glVertex(center);
+            glVertex(center.cast<float>());
             glEnd();
             glEnable(GL_TEXTURE_2D);
         }
@@ -3656,13 +3656,13 @@ void Renderer::renderObjectAsPoint(const Vector3f& position,
             glBegin(GL_QUADS);
             glColor(color, alpha);
             glTexCoord2f(0, 1);
-            glVertex(center + (v0 * pointSize));
+            glVertex((center + (v0 * pointSize)).cast<float>());
             glTexCoord2f(1, 1);
-            glVertex(center + (v1 * pointSize));
+            glVertex((center + (v1 * pointSize)).cast<float>());
             glTexCoord2f(1, 0);
-            glVertex(center + (v2 * pointSize));
+            glVertex((center + (v2 * pointSize)).cast<float>());
             glTexCoord2f(0, 0);
-            glVertex(center + (v3 * pointSize));
+            glVertex((center + (v3 * pointSize)).cast<float>());
             glEnd();
         }
 
@@ -3680,13 +3680,13 @@ void Renderer::renderObjectAsPoint(const Vector3f& position,
             glBegin(GL_QUADS);
             glColor(color, glareAlpha);
             glTexCoord2f(0, 1);
-            glVertex(center + (v0 * glareSize));
+            glVertex((center + (v0 * glareSize)).cast<float>());
             glTexCoord2f(1, 1);
-            glVertex(center + (v1 * glareSize));
+            glVertex((center + (v1 * glareSize)).cast<float>());
             glTexCoord2f(1, 0);
-            glVertex(center + (v2 * glareSize));
+            glVertex((center + (v2 * glareSize)).cast<float>());
             glTexCoord2f(0, 0);
-            glVertex(center + (v3 * glareSize));
+            glVertex((center + (v3 * glareSize)).cast<float>());
             glEnd();
         }
 #else
@@ -4510,19 +4510,19 @@ setupObjectLighting(const vector<LightSource>& suns,
 }
 
 
-void Renderer::renderObject(const Vector3f& pos,
-                            float distance,
+void Renderer::renderObject(const Vector3d& pos,
+                            double distance,
                             double now,
                             const Quaternionf& cameraOrientation,
-                            float nearPlaneDistance,
-                            float farPlaneDistance,
+                            double nearPlaneDistance,
+                            double farPlaneDistance,
                             RenderProperties& obj,
                             const LightingState& ls)
 {
     RenderInfo ri;
 
     float altitude = distance - obj.radius;
-    float discSizeInPixels = obj.radius / (max(nearPlaneDistance, altitude) * pixelSize);
+    float discSizeInPixels = obj.radius / (max((float)nearPlaneDistance, altitude) * pixelSize);
 
     ri.sunDir_eye = Vector3f::UnitY();
     ri.sunDir_obj = Vector3f::UnitY();
@@ -4592,8 +4592,8 @@ void Renderer::renderObject(const Vector3f& pos,
 
     Matrix3f planetRotation = obj.orientation.toRotationMatrix();
 
-    ri.eyeDir_obj = -(planetRotation * pos).normalized();
-    ri.eyePos_obj = -(planetRotation * (pos.cwiseQuotient(scaleFactors)));
+    ri.eyeDir_obj = -(planetRotation * pos.cast<float>()).normalized();
+    ri.eyePos_obj = -(planetRotation * (pos.cast<float>().cwiseQuotient(scaleFactors)));
 
     ri.orientation = cameraOrientation * obj.orientation.conjugate();
 
@@ -4633,29 +4633,29 @@ void Renderer::renderObject(const Vector3f& pos,
     }
 
     // Compute the inverse model/view matrix
-    Affine3f invModelView = obj.orientation *
-                            Translation3f(-pos / obj.radius) *
-                            cameraOrientation.conjugate();
-    Matrix4f invMV = invModelView.matrix();
+    Affine3d invModelView = obj.orientation.cast<double>() *
+                            Translation3d(-pos / obj.radius) *
+                            cameraOrientation.cast<double>().conjugate();
+    Matrix4d invMV = invModelView.matrix();
 
     // The sphere rendering code uses the view frustum to determine which
     // patches are visible. In order to avoid rendering patches that can't
     // be seen, make the far plane of the frustum as close to the viewer
     // as possible.
-    float frustumFarPlane = farPlaneDistance;
+    double frustumFarPlane = farPlaneDistance;
     if (obj.geometry == InvalidResource)
     {
         // Only adjust the far plane for ellipsoidal objects
-        float d = pos.norm();
+        double d = pos.norm();
 
         // Account for non-spherical objects
-        float eradius = scaleFactors.minCoeff();
+        double eradius = scaleFactors.minCoeff();
 
         if (d > eradius)
         {
             // Include a fudge factor to eliminate overaggressive clipping
             // due to limited floating point precision
-            frustumFarPlane = (float) sqrt(square(d) - square(eradius)) * 1.1f;
+            frustumFarPlane = (double) sqrt(square(d) - square(eradius)) * 1.1;
         }
         else
         {
@@ -4685,7 +4685,7 @@ void Renderer::renderObject(const Vector3f& pos,
     Frustum viewFrustum(degToRad(fov),
                         (float) windowWidth / (float) windowHeight,
                         nearPlaneDistance / radius, frustumFarPlane / radius);
-    viewFrustum.transform(invMV);
+    viewFrustum.transform((const Matrix4d&)invMV.cast<double>());
 
     // Get cloud layer parameters
     Texture* cloudTex       = nullptr;
@@ -4824,7 +4824,7 @@ void Renderer::renderObject(const Vector3f& pos,
                 glRotate(cameraOrientation);
 
                 renderEllipsoidAtmosphere(*atmosphere,
-                                          pos,
+                                          pos.cast<float>(),
                                           obj.orientation,
                                           scaleFactors,
                                           ri.sunDir_eye,
@@ -5105,18 +5105,18 @@ bool Renderer::testEclipse(const Body& receiver,
 
 
 void Renderer::renderPlanet(Body& body,
-                            const Vector3f& pos,
-                            float distance,
+                            const Vector3d& pos,
+                            double distance,
                             float appMag,
                             const Observer& observer,
                             const Quaternionf& cameraOrientation,
-                            float nearPlaneDistance,
-                            float farPlaneDistance)
+                            double nearPlaneDistance,
+                            double farPlaneDistance)
 {
     double now = observer.getTime();
     float altitude = distance - body.getRadius();
     float discSizeInPixels = body.getRadius() /
-        (max(nearPlaneDistance, altitude) * pixelSize);
+        (max(nearPlaneDistance, (double)altitude) * pixelSize);
 
     if (discSizeInPixels > 1 && body.hasVisibleGeometry())
     {
@@ -5167,7 +5167,7 @@ void Renderer::renderPlanet(Body& body,
                             secondaryIlluminators,
                             rp.orientation,
                             scaleFactors,
-                            pos,
+                            pos.cast<float>(),
                             isNormalized,
 #ifdef USE_HDR
                             faintestMag,
@@ -5288,7 +5288,7 @@ void Renderer::renderPlanet(Body& body,
                 // confusingly by a _higher_ LOD value.
                 float ringWidth = rings->outerRadius - rings->innerRadius;
                 float projectedRingSize = std::abs(lights.lights[li].direction_obj.dot(lights.ringPlaneNormal)) * ringWidth;
-                float projectedRingSizeInPixels = projectedRingSize / (max(nearPlaneDistance, altitude) * pixelSize);
+                float projectedRingSizeInPixels = projectedRingSize / (max(nearPlaneDistance, (double)altitude) * pixelSize);
                 Texture* ringsTex = rings->texture.find(textureResolution);
                 if (ringsTex)
                 {
@@ -5406,13 +5406,13 @@ void Renderer::renderPlanet(Body& body,
 
 
 void Renderer::renderStar(const Star& star,
-                          const Vector3f& pos,
-                          float distance,
+                          const Vector3d& pos,
+                          double distance,
                           float appMag,
                           const Quaternionf& cameraOrientation,
                           double now,
-                          float nearPlaneDistance,
-                          float farPlaneDistance)
+                          double nearPlaneDistance,
+                          double farPlaneDistance)
 {
     if (!star.getVisibility())
         return;
@@ -5536,7 +5536,7 @@ static float cometDustTailLength(float distanceToSun,
 
 // TODO: Remove unused parameters??
 void Renderer::renderCometTail(const Body& body,
-                               const Vector3f& pos,
+                               const Vector3d& pos,
                                double now,
                                float discSizeInPixels)
 {
@@ -5674,7 +5674,7 @@ void Renderer::renderCometTail(const Body& body,
         }
     }
 
-    Vector3f viewDir = pos.normalized();
+    Vector3d viewDir = pos.normalized();
 
     glDisable(GL_CULL_FACE);
     for (i = 0; i < nTailPoints - 1; i++)
@@ -5684,17 +5684,17 @@ void Renderer::renderCometTail(const Body& body,
         for (int j = 0; j < nTailSlices; j++)
         {
             ProcessCometTailVertex(body.getCometTailColor(),
-                                   cometTailVertices[n + j], viewDir,
+                                   cometTailVertices[n + j], viewDir.cast<float>(),
                                    fadeDistance);
             ProcessCometTailVertex(body.getCometTailColor(),
                                    cometTailVertices[n + j + nTailSlices],
-                                   viewDir, fadeDistance);
+                                   viewDir.cast<float>(), fadeDistance);
         }
         ProcessCometTailVertex(body.getCometTailColor(),
-                               cometTailVertices[n], viewDir, fadeDistance);
+                               cometTailVertices[n], viewDir.cast<float>(), fadeDistance);
         ProcessCometTailVertex(body.getCometTailColor(),
                                cometTailVertices[n + nTailSlices],
-                               viewDir, fadeDistance);
+                               viewDir.cast<float>(), fadeDistance);
         glEnd();
     }
     glEnable(GL_CULL_FACE);
@@ -5715,7 +5715,7 @@ void Renderer::renderCometTail(const Body& body,
 
 // Render a reference mark
 void Renderer::renderReferenceMark(const ReferenceMark& refMark,
-                                   const Vector3f& pos,
+                                   const Vector3d& pos,
                                    float distance,
                                    double now,
                                    float nearPlaneDistance)
@@ -5731,7 +5731,7 @@ void Renderer::renderReferenceMark(const ReferenceMark& refMark,
     glPushMatrix();
     glTranslate(pos);
 
-    refMark.render(this, pos, discSizeInPixels, now);
+    refMark.render(this, pos.cast<float>(), discSizeInPixels, now);
 
     glPopMatrix();
 
@@ -5988,7 +5988,7 @@ void Renderer::buildRenderLists(const Vector3d& astrocentricObserverPos,
             {
                 RenderListEntry rle;
 
-                rle.position = pos_v.cast<float>();
+                rle.position = pos_v;
                 rle.distance = (float) dist_v;
                 rle.centerZ = pos_v.cast<float>().dot(viewMatZ);
                 rle.appMag   = appMag;
@@ -5998,7 +5998,7 @@ void Renderer::buildRenderLists(const Vector3d& astrocentricObserverPos,
                 // length, and for calculating sky brightness to adjust the limiting magnitude.
                 // In both cases, it's the wrong quantity to use (e.g. for objects with orbits
                 // defined relative to the SSB.)
-                rle.sun = -pos_s.cast<float>();
+                rle.sun = -pos_s;
 
                 addRenderListEntries(rle, *body, isLabeled);
             }
@@ -6211,10 +6211,10 @@ void Renderer::buildLabelLists(const Frustum& viewFrustum,
 
         if (render_item.renderableType == RenderListEntry::RenderableBody &&
             (classification & labelClassMask)                       &&
-            viewFrustum.testSphere(render_item.position, render_item.radius) != Frustum::Outside)
+            viewFrustum.testSphere(render_item.position, (double)render_item.radius) != Frustum::Outside)
         {
             const Body* body = render_item.body;
-            Vector3f pos = render_item.position;
+            Vector3d pos = render_item.position;
 
             auto boundingRadiusSize = (float) (body->getOrbit(now)->getBoundingRadius() / render_item.distance) / pixelSize;
             if (boundingRadiusSize > minOrbitSize)
@@ -6335,7 +6335,7 @@ void Renderer::buildLabelLists(const Frustum& viewFrustum,
                         }
                     }
 
-                    addSortedAnnotation(nullptr, body->getName(true), labelColor, pos);
+                    addSortedAnnotation(nullptr, body->getName(true), labelColor, pos.cast<float>());
                 }
             }
         }
@@ -6434,12 +6434,12 @@ ObjectRenderer<OBJ, PREC>::ObjectRenderer(const PREC _distanceLimit) :
 }
 
 
-class PointStarRenderer : public ObjectRenderer<Star, float>
+class PointStarRenderer : public ObjectRenderer<Star, double>
 {
  public:
     PointStarRenderer();
 
-    void process(const Star& star, float distance, float appMag);
+    void process(const Star& star, double distance, float appMag) override;
 
  public:
     Vector3d obsPos;
@@ -6456,7 +6456,7 @@ class PointStarRenderer : public ObjectRenderer<Star, float>
     float cosFOV{ 1.0f };
 
     const ColorTemperatureTable* colorTemp{ nullptr };
-    float SolarSystemMaxDistance;
+    double SolarSystemMaxDistance;
 #ifdef DEBUG_HDR_ADAPT
     float minMag;
     float maxMag;
@@ -6471,20 +6471,20 @@ class PointStarRenderer : public ObjectRenderer<Star, float>
 
 
 PointStarRenderer::PointStarRenderer() :
-    ObjectRenderer<Star, float>(STAR_DISTANCE_LIMIT)
+    ObjectRenderer<Star, double>(STAR_DISTANCE_LIMIT)
 {
 }
 
 
-void PointStarRenderer::process(const Star& star, float distance, float appMag)
+void PointStarRenderer::process(const Star& star, double distance, float appMag)
 {
     nProcessed++;
 
-    Vector3f starPos = star.getPosition();
+    Vector3d starPos = star.getPosition();
 
     // Calculate the difference at double precision *before* converting to float.
     // This is very important for stars that are far from the origin.
-    Vector3f relPos = (starPos.cast<double>() - obsPos).cast<float>();
+    Vector3d relPos = (starPos.cast<double>() - obsPos);
     float   orbitalRadius = star.getOrbitalRadius();
     bool    hasOrbit = orbitalRadius > 0.0f;
 
@@ -6498,7 +6498,7 @@ void PointStarRenderer::process(const Star& star, float distance, float appMag)
     // TODO: consider normalizing relPos and comparing relPos*viewNormal against
     // cosFOV--this will cull many more stars than relPos*viewNormal, at the
     // cost of a normalize per star.
-    if (relPos.dot(viewNormal) > 0.0f || relPos.x() * relPos.x() < 0.1f || hasOrbit)
+    if (relPos.dot(viewNormal.cast<double>()) > 0.0f || relPos.x() * relPos.x() < 0.1f || hasOrbit)
     {
 #ifdef HDR_COMPRESS
         Color starColorFull = colorTemp->lookupColor(star.getTemperature());
@@ -6533,13 +6533,13 @@ void PointStarRenderer::process(const Star& star, float distance, float appMag)
             Vector3d hPos = astrocentricPosition(observer->getPosition(),
                                                  star,
                                                  observer->getTime());
-            relPos = hPos.cast<float>() * -astro::kilometersToLightYears(1.0f),
+            relPos = hPos * -astro::kilometersToLightYears(1.0),
             distance = relPos.norm();
 
             // Recompute apparent magnitude using new distance computation
-            appMag = astro::absToAppMag(star.getAbsoluteMagnitude(), distance);
+            appMag = astro::absToAppMag((double)star.getAbsoluteMagnitude(), (double)distance);
 
-            starPos = obsPos.cast<float>() + relPos * (RenderDistance / distance);
+            starPos = obsPos + relPos * (RenderDistance / distance);
 
             float radius = star.getRadius();
             discSizeInPixels = radius / astro::lightYearsToKilometers(distance) / pixelSize;
@@ -6549,16 +6549,16 @@ void PointStarRenderer::process(const Star& star, float distance, float appMag)
         // Place labels for stars brighter than the specified label threshold brightness
         if ((labelMode & Renderer::StarLabels) && appMag < labelThresholdMag)
         {
-            Vector3f starDir = relPos;
+            Vector3d starDir = relPos;
             starDir.normalize();
-            if (starDir.dot(viewNormal) > cosFOV)
+            if (starDir.dot(viewNormal.cast<double>()) > cosFOV)
             {
-                float distr = 3.5f * (labelThresholdMag - appMag)/labelThresholdMag;
-                if (distr > 1.0f)
-                    distr = 1.0f;
+                double distr = 3.5 * (labelThresholdMag - appMag)/labelThresholdMag;
+                if (distr > 1.0)
+                    distr = 1.0;
                 renderer->addBackgroundAnnotation(nullptr, starDB->getStarName(star, true),
                                                   Color(Renderer::StarLabelColor, distr * Renderer::StarLabelColor.alpha()),
-                                                  relPos);
+                                                  relPos.cast<float>());
                 nLabelled++;
             }
         }
@@ -6600,11 +6600,11 @@ void PointStarRenderer::process(const Star& star, float distance, float appMag)
                     discSize *= discScale;
 
                     float glareAlpha = min(0.5f, discScale / 4.0f);
-                    glareVertexBuffer->addStar(relPos, Color(starColor, glareAlpha), discSize * 3.0f);
+                    glareVertexBuffer->addStar(relPos.cast<float>(), Color(starColor, glareAlpha), discSize * 3.0f);
 
                     alpha = 1.0f;
                 }
-                starVertexBuffer->addStar(relPos, Color(starColor, alpha), discSize);
+                starVertexBuffer->addStar(relPos.cast<float>(), Color(starColor, alpha), discSize);
             }
             else
             {
@@ -6616,12 +6616,12 @@ void PointStarRenderer::process(const Star& star, float distance, float appMag)
                 {
                     float discScale = min(100.0f, satPoint - appMag + 2.0f);
                     float glareAlpha = min(GlareOpacity, (discScale - 2.0f) / 4.0f);
-                    glareVertexBuffer->addStar(relPos, Color(starColor, glareAlpha), 2.0f * discScale * size);
+                    glareVertexBuffer->addStar(relPos.cast<float>(), Color(starColor, glareAlpha), 2.0f * discScale * size);
 #ifdef DEBUG_HDR_ADAPT
                     maxSize = max(maxSize, 2.0f * discScale * size);
 #endif
                 }
-                starVertexBuffer->addStar(relPos, Color(starColor, alpha), size);
+                starVertexBuffer->addStar(relPos.cast<float>(), Color(starColor, alpha), size);
             }
 
             ++nRendered;
@@ -6640,7 +6640,7 @@ void PointStarRenderer::process(const Star& star, float distance, float appMag)
             // stars.
             float scale = astro::lightYearsToKilometers(1.0f);
             rle.position = relPos * scale;
-            rle.centerZ = rle.position.dot(viewMatZ);
+            rle.centerZ = rle.position.dot(viewMatZ.cast<double>());
             rle.distance = rle.position.norm();
             rle.radius = star.getRadius();
             rle.discSizeInPixels = discSizeInPixels;
@@ -6735,7 +6735,7 @@ void Renderer::renderPointStars(const StarDatabase& starDB,
         starRenderer.starVertexBuffer->startSprites();
 
     starDB.findVisibleStars(starRenderer,
-                            obsPos.cast<float>(),
+                            obsPos,
                             observer.getOrientationf(),
                             degToRad(fov),
                             (float) windowWidth / (float) windowHeight,
@@ -7210,7 +7210,7 @@ void Renderer::labelConstellations(const AsterismList& asterisms,
                 // The constellation label is positioned at the average
                 // position of all stars in the first chain.  This usually
                 // gives reasonable results.
-                Vector3f avg = Vector3f::Zero();
+                Vector3d avg = Vector3d::Zero();
                 // XXX: std::reduce
                 for (const auto& c : chain)
                     avg += c;
@@ -7221,9 +7221,9 @@ void Renderer::labelConstellations(const AsterismList& asterisms,
                 avg.normalize();
                 avg = avg * 1.0e4f;
 
-                Vector3f rpos = avg - observerPos;
+                Vector3d rpos = avg - observerPos.cast<double>();
 
-                if ((observer.getOrientationf() * rpos).z() < 0)
+                if ((observer.getOrientationf().cast<double>() * rpos).z() < 0)
                 {
                     // We'll linearly fade the labels as a function of the
                     // observer's distance to the origin of coordinates:
@@ -7244,7 +7244,7 @@ void Renderer::labelConstellations(const AsterismList& asterisms,
                     addBackgroundAnnotation(nullptr,
                                             ast->getName((labelMode & I18nConstellationLabels) != 0),
                                             Color(labelColor, opacity),
-                                            rpos,
+                                            rpos.cast<float>(),
                                             AlignCenter, VerticalAlignCenter);
                 }
             }

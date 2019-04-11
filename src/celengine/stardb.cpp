@@ -486,14 +486,14 @@ string StarDatabase::getStarNameList(const Star& star, const unsigned int maxNam
 
 
 void StarDatabase::findVisibleStars(StarHandler& starHandler,
-                                    const Vector3f& position,
+                                    const Vector3d& position,
                                     const Quaternionf& orientation,
                                     float fovY,
                                     float aspectRatio,
                                     float limitingMag) const
 {
     // Compute the bounding planes of an infinite view frustum
-    Hyperplane<float, 3> frustumPlanes[5];
+    Hyperplane<double, 3> frustumPlanes[5];
     Vector3f planeNormals[5];
     Eigen::Matrix3f rot = orientation.toRotationMatrix();
     float h = (float) tan(fovY / 2);
@@ -506,7 +506,7 @@ void StarDatabase::findVisibleStars(StarHandler& starHandler,
     for (int i = 0; i < 5; i++)
     {
         planeNormals[i] = rot.transpose() * planeNormals[i].normalized();
-        frustumPlanes[i] = Hyperplane<float, 3>(planeNormals[i], position);
+        frustumPlanes[i] = Hyperplane<double, 3>(planeNormals[i].cast<double>(), position);
     }
 
     octreeRoot->processVisibleObjects(starHandler,
@@ -518,7 +518,7 @@ void StarDatabase::findVisibleStars(StarHandler& starHandler,
 
 
 void StarDatabase::findCloseStars(StarHandler& starHandler,
-                                  const Vector3f& position,
+                                  const Vector3d& position,
                                   float radius) const
 {
     octreeRoot->processCloseObjects(starHandler,
@@ -966,7 +966,7 @@ bool StarDatabase::createStar(Star* star,
                     if (barycenter != nullptr)
                     {
                         hasBarycenter = true;
-                        barycenterPosition = barycenter->getPosition();
+                        barycenterPosition = barycenter->getPosition().cast<float>();
                     }
                 }
 
@@ -994,7 +994,7 @@ bool StarDatabase::createStar(Star* star,
     // orbit and barycenter, it's position is the position of the barycenter.
     if (hasBarycenter)
     {
-        star->setPosition(barycenterPosition);
+        star->setPosition(barycenterPosition.cast<double>());
     }
     else
     {
@@ -1004,11 +1004,11 @@ bool StarDatabase::createStar(Star* star,
 
         if (disposition == DataDisposition::Modify)
         {
-            Vector3f pos = star->getPosition();
+            Vector3d pos = star->getPosition();
 
             // Convert from Celestia's coordinate system
-            Vector3f v(pos.x(), -pos.z(), pos.y());
-            v = Quaternionf(AngleAxis<float>((float) astro::J2000Obliquity, Vector3f::UnitX())) * v;
+            Vector3d v(pos.x(), -pos.z(), pos.y());
+            v = Quaterniond(AngleAxis<double>((double) astro::J2000Obliquity, Vector3d::UnitX())) * v;
 
             distance = v.norm();
             if (distance > 0.0)
@@ -1068,7 +1068,7 @@ bool StarDatabase::createStar(Star* star,
             float decf = ((float) dec);
             float distancef = ((float) distance);
             Vector3d pos = astro::equatorialToCelestialCart((double) raf, (double) decf, (double) distancef);
-            star->setPosition(pos.cast<float>());
+            star->setPosition(pos);
         }
     }
 
@@ -1370,7 +1370,7 @@ void StarDatabase::buildOctree()
     DPRINTF(1, "Sorting stars into octree . . .\n");
     float absMag = astro::appToAbsMag(STAR_OCTREE_MAGNITUDE,
                                       STAR_OCTREE_ROOT_SIZE * (float) sqrt(3.0));
-    DynamicStarOctree* root = new DynamicStarOctree(Vector3f(1000.0f, 1000.0f, 1000.0f),
+    DynamicStarOctree* root = new DynamicStarOctree(Vector3d(1000.0, 1000.0, 1000.0),
                                                     absMag);
     for (unsigned int i = 0; i < unsortedStars.size(); ++i)
     {

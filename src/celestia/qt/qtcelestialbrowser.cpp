@@ -69,7 +69,7 @@ public:
 
 private:
     Criterion criterion;
-    Vector3f pos;
+    Vector3d pos;
     UniversalCoord ucPos;
     const Universe* universe;
 };
@@ -258,7 +258,7 @@ StarPredicate::StarPredicate(Criterion _criterion,
     ucPos(_observerPos),
     universe(_universe)
 {
-    pos = ucPos.toLy().cast<float>();
+    pos = ucPos.toLy().cast<double>();
 }
 
 

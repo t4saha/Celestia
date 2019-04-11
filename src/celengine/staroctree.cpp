@@ -37,20 +37,20 @@ bool starAbsoluteMagnitudePredicate(const Star& star, const float absMag)
 }
 
 
-bool starOrbitStraddlesNodesPredicate(const Vector3f& cellCenterPos, const Star& star, const float /*unused*/)
+bool starOrbitStraddlesNodesPredicate(const Vector3d& cellCenterPos, const Star& star, const float /*unused*/)
 {
     //checks if this star's orbit straddles child nodes
     float orbitalRadius    = star.getOrbitalRadius();
     if (orbitalRadius == 0.0f)
         return false;
 
-    Vector3f starPos    = star.getPosition();
+    Vector3d starPos    = star.getPosition();
 
     return (starPos - cellCenterPos).cwiseAbs().minCoeff() < orbitalRadius;
 }
 
 
-float starAbsoluteMagnitudeDecayFunction(const float excludingFactor)
+double starAbsoluteMagnitudeDecayFunction(const double excludingFactor)
 {
     return astro::lumToAbsMag(astro::absMagToLum(excludingFactor) / 4.0f);
 }
@@ -58,9 +58,9 @@ float starAbsoluteMagnitudeDecayFunction(const float excludingFactor)
 
 template<>
 DynamicStarOctree* DynamicStarOctree::getChild(const Star&          obj,
-                                               const Vector3f& cellCenterPos)
+                                               const Vector3d& cellCenterPos)
 {
-    Vector3f objPos    = obj.getPosition();
+    Vector3d objPos    = obj.getPosition();
 
     int child = 0;
     child     |= objPos.x() < cellCenterPos.x() ? 0 : XPos;
@@ -86,10 +86,10 @@ template<> DynamicStarOctree::ExclusionFactorDecayFunction*
 // total specialization of the StaticOctree template process*() methods for stars:
 template<>
 void StarOctree::processVisibleObjects(StarHandler&    processor,
-                                       const Vector3f& obsPosition,
-                                       const Hyperplane<float, 3>*   frustumPlanes,
+                                       const Vector3d& obsPosition,
+                                       const Hyperplane<double, 3>*   frustumPlanes,
                                        float           limitingFactor,
-                                       float           scale) const
+                                       double           scale) const
 {
     // See if this node lies within the view frustum
 
@@ -97,7 +97,7 @@ void StarOctree::processVisibleObjects(StarHandler&    processor,
     // planes that define the infinite view frustum.
     for (unsigned int i = 0; i < 5; ++i)
     {
-        const Hyperplane<float, 3>& plane = frustumPlanes[i];
+        const Hyperplane<double, 3>& plane = frustumPlanes[i];
         float r = scale * plane.normal().cwiseAbs().sum();
         if (plane.signedDistance(cellCenterPos) < -r)
             return;
@@ -105,10 +105,10 @@ void StarOctree::processVisibleObjects(StarHandler&    processor,
 
     // Compute the distance to node; this is equal to the distance to
     // the cellCenterPos of the node minus the boundingRadius of the node, scale * SQRT3.
-    float minDistance = (obsPosition - cellCenterPos).norm() - scale * StarOctree::SQRT3;
+    double minDistance = (obsPosition - cellCenterPos).norm() - scale * StarOctree::SQRT3;
 
     // Process the objects in this node
-    float dimmest     = minDistance > 0 ? astro::appToAbsMag(limitingFactor, minDistance) : 1000;
+    float dimmest     = minDistance > 0 ? astro::appToAbsMag((double)limitingFactor, minDistance) : 1000;
 
     for (unsigned int i=0; i<nObjects; ++i)
     {
@@ -116,7 +116,7 @@ void StarOctree::processVisibleObjects(StarHandler&    processor,
 
         if (obj.getAbsoluteMagnitude() < dimmest)
         {
-            float distance    = (obsPosition - obj.getPosition()).norm();
+            double distance    = (obsPosition - obj.getPosition()).norm();
             float appMag      = astro::absToAppMag(obj.getAbsoluteMagnitude(), distance);
 
             if (appMag < limitingFactor || (distance < MAX_STAR_ORBIT_RADIUS && obj.getOrbit()))
@@ -126,7 +126,7 @@ void StarOctree::processVisibleObjects(StarHandler&    processor,
 
     // See if any of the objects in child nodes are potentially included
     // that we need to recurse deeper.
-    if (minDistance <= 0 || astro::absToAppMag(exclusionFactor, minDistance) <= limitingFactor)
+    if (minDistance <= 0 || astro::absToAppMag((double)exclusionFactor, minDistance) <= limitingFactor)
     {
         // Recurse into the child nodes
         if (_children != nullptr)
@@ -146,13 +146,13 @@ void StarOctree::processVisibleObjects(StarHandler&    processor,
 
 template<>
 void StarOctree::processCloseObjects(StarHandler&    processor,
-                                     const Vector3f& obsPosition,
-                                     float           boundingRadius,
-                                     float           scale) const
+                                     const Vector3d& obsPosition,
+                                     double           boundingRadius,
+                                     double           scale) const
 {
     // Compute the distance to node; this is equal to the distance to
     // the cellCenterPos of the node minus the boundingRadius of the node, scale * SQRT3.
-    float nodeDistance    = (obsPosition - cellCenterPos).norm() - scale * StarOctree::SQRT3;
+    double nodeDistance    = (obsPosition - cellCenterPos).norm() - scale * StarOctree::SQRT3;
 
     if (nodeDistance > boundingRadius)
         return;
@@ -162,7 +162,7 @@ void StarOctree::processCloseObjects(StarHandler&    processor,
 
     // Compute distance squared to avoid having to sqrt for distance
     // comparison.
-    float radiusSquared    = boundingRadius * boundingRadius;
+    double radiusSquared    = boundingRadius * boundingRadius;
 
     // Check all the objects in the node.
     for (unsigned int i = 0; i < nObjects; ++i)
@@ -171,7 +171,7 @@ void StarOctree::processCloseObjects(StarHandler&    processor,
 
         if ((obsPosition - obj.getPosition()).squaredNorm() < radiusSquared)
         {
-            float distance    = (obsPosition - obj.getPosition()).norm();
+            double distance    = (obsPosition - obj.getPosition()).norm();
             float appMag      = astro::absToAppMag(obj.getAbsoluteMagnitude(), distance);
 
             processor.process(obj, distance, appMag);

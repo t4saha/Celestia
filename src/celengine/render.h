@@ -59,13 +59,13 @@ struct RenderListEntry
         const ReferenceMark* refMark;
     };
 
-    Eigen::Vector3f position;
-    Eigen::Vector3f sun;
-    float distance;
+    Eigen::Vector3d position;
+    Eigen::Vector3d sun;
+    double distance;
     float radius;
-    float centerZ;
-    float nearZ;
-    float farZ;
+    double centerZ;
+    double nearZ;
+    double farZ;
     float discSizeInPixels;
     float appMag;
     RenderableType renderableType;
@@ -322,7 +322,7 @@ class Renderer
 
     struct OrbitPathListEntry
     {
-        float centerZ;
+        double centerZ;
         float radius;
         Body* body;
         const Star* star;
@@ -421,8 +421,8 @@ class Renderer
     struct DepthBufferPartition
     {
         int index;
-        float nearZ;
-        float farZ;
+        double nearZ;
+        double farZ;
     };
 
  private:
@@ -468,43 +468,43 @@ class Renderer
                                   const Observer& observer,
                                   double now);
 
-    void renderObject(const Eigen::Vector3f& pos,
-                      float distance,
+    void renderObject(const Eigen::Vector3d& pos,
+                      double distance,
                       double now,
                       const Eigen::Quaternionf& cameraOrientation,
-                      float nearPlaneDistance,
-                      float farPlaneDistance,
+                      double nearPlaneDistance,
+                      double farPlaneDistance,
                       RenderProperties& obj,
                       const LightingState&);
 
     void renderPlanet(Body& body,
-                      const Eigen::Vector3f& pos,
-                      float distance,
+                      const Eigen::Vector3d& pos,
+                      double distance,
                       float appMag,
                       const Observer& observer,
                       const Eigen::Quaternionf& cameraOrientation,
-                      float, float);
+                      double, double);
 
     void renderStar(const Star& star,
-                    const Eigen::Vector3f& pos,
-                    float distance,
+                    const Eigen::Vector3d& pos,
+                    double distance,
                     float appMag,
                     const Eigen::Quaternionf& orientation,
                     double now,
-                    float, float);
+                    double, double);
 
     void renderReferenceMark(const ReferenceMark& refMark,
-                             const Eigen::Vector3f& pos,
+                             const Eigen::Vector3d& pos,
                              float distance,
                              double now,
                              float nearPlaneDistance);
 
     void renderCometTail(const Body& body,
-                         const Eigen::Vector3f& pos,
+                         const Eigen::Vector3d& pos,
                          double now,
                          float discSizeInPixels);
 
-    void renderObjectAsPoint_nosprite(const Eigen::Vector3f& center,
+    void renderObjectAsPoint_nosprite(const Eigen::Vector3d& center,
                                       float radius,
                                       float appMag,
                                       float _faintestMag,
@@ -512,7 +512,7 @@ class Renderer
                                       Color color,
                                       const Eigen::Quaternionf& cameraOrientation,
                                       bool useHalos);
-    void renderObjectAsPoint(const Eigen::Vector3f& center,
+    void renderObjectAsPoint(const Eigen::Vector3d& center,
                              float radius,
                              float appMag,
                              float _faintestMag,

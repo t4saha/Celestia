@@ -54,14 +54,14 @@ static Vector3f intersect3(const Frustum::PlaneType& p0,
                            const Frustum::PlaneType& p2)
 {
     Matrix3f m;
-    m.row(0) = p0.normal();
-    m.row(1) = p1.normal();
-    m.row(2) = p2.normal();
+    m.row(0) = p0.cast<float>().normal();
+    m.row(1) = p1.cast<float>().normal();
+    m.row(2) = p2.cast<float>().normal();
     float d = m.determinant();
 
     return (p0.offset() * p1.normal().cross(p2.normal()) +
             p1.offset() * p2.normal().cross(p0.normal()) +
-            p2.offset() * p0.normal().cross(p1.normal())) * (1.0f / d);
+            p2.offset() * p0.normal().cross(p1.normal())).cast<float>() * (1.0f / d);
 }
 
 static void InitTrigArrays()
@@ -556,13 +556,13 @@ int LODSphereMesh::renderPatches(int phi0, int theta0,
     // If the normal is near zero length, something's going wrong
     assert(normal.norm() != 0.0f);
     normal.normalize();
-    Frustum::PlaneType separatingPlane(normal, p0);
+    Frustum::PlaneType separatingPlane(normal.cast<double>(), p0.cast<double>());
 
     bool outside = true;
 #if 1
     for (int k = 0; k < 8; k++)
     {
-        if (separatingPlane.absDistance(ri.fp[k]) > 0.0f)
+        if (separatingPlane.absDistance(ri.fp[k].cast<double>()) > 0.0f)
         {
             outside = false;
             break;
