@@ -1,5 +1,3 @@
-#version 120
-
 attribute vec3 in_Position;
 attribute vec4 in_Color;
 attribute float starSize;
@@ -44,7 +42,7 @@ void main(void)
     vec3 p = m * in_Position.xyz;
     float br = 2.0f * brightness;
 
-    vec4 mod = gl_ModelViewMatrix * vec4(in_Position, 1.0f);
+    vec4 mod = ModelViewMatrix * vec4(in_Position, 1.0f);
     float s = 2000.0 / -mod.z * br * starSize;
 
     float obsDistanceToStarRatio = length(p + offset) / clipDistance;
@@ -53,5 +51,5 @@ void main(void)
     gl_PointSize = s * min(obsDistanceToStarRatio, 1.0f);
 
     color = vec4(in_Color.rgb, min(1.0f, br * (1.0f - pixelWeight * relStarDensity())));
-    gl_Position = gl_ModelViewProjectionMatrix * vec4(p, 1.0f);
+    gl_Position = MVPMatrix * vec4(p, 1.0f);
 }

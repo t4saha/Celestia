@@ -1,5 +1,3 @@
-#version 120
-
 attribute vec4 in_Position;
 attribute vec4 in_TexCoord0;
 //attribute float in_ColorIndex;
@@ -22,5 +20,5 @@ void main(void)
     float a = in_TexCoord0.w / 65535.0f; // [0, 65535] -> [0, 1]
     color = vec4(texture2D(colorTex, vec2(t, 0.0f)).rgb, a);
     texCoord = in_TexCoord0.st;
-    gl_Position = gl_ModelViewProjectionMatrix * in_Position;
+    gl_Position = MVPMatrix * in_Position;
 }
