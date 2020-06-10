@@ -17,7 +17,7 @@
 #include <celutil/debug.h>
 
 class Renderer;
-class Matrices;
+struct Matrices;
 
 class MarkerRepresentation
 {

@@ -25,7 +25,7 @@
 
 class Selection;
 class Renderer;
-class Matrices;
+struct Matrices;
 
 constexpr const float DSO_DEFAULT_ABS_MAGNITUDE = -1000.0f;
 

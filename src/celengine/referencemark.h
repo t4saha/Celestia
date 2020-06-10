@@ -17,7 +17,7 @@
 #include <Eigen/Core>
 
 class Renderer;
-class Matrices;
+struct Matrices;
 
 /*! Reference marks give additional visual information about the
  *  position and orientation of a solar system body. Items such as
