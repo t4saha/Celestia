@@ -31,7 +31,7 @@ bool init() noexcept
     ARB_vertex_array_object        = has_extension("GL_ARB_vertex_array_object");
     EXT_framebuffer_object         = has_extension("GL_EXT_framebuffer_object");
 #endif
-    ARB_shader_texture_lod         = has_extension("GL_EXT_shader_texture_lod");
+    ARB_shader_texture_lod         = has_extension("GL_ARB_shader_texture_lod");
     EXT_texture_compression_s3tc   = has_extension("GL_EXT_texture_compression_s3tc");
     EXT_texture_filter_anisotropic = has_extension("GL_EXT_texture_filter_anisotropic");
 
