@@ -64,7 +64,13 @@ static const char* CommonHeader = "#version 120\n";
 #else
 static const char* CommonHeader = "#version 100\nprecision highp float;\n";
 #endif
-static const char* VertexHeader = "uniform mat4 ModelViewMatrix;\nuniform mat4 MVPMatrix;\n";
+static const char* VertexHeader = R"glsl(
+uniform mat4 ModelViewMatrix;
+uniform mat4 MVPMatrix;
+
+invariant gl_Position;
+)glsl";
+
 static const char* FragmentHeader = "";
 
 static const char* CommonAttribs = R"glsl(
